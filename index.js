@@ -1,10 +1,14 @@
-const mongodb = require('mongodb');
 const express = require('express');
-const dbconnect = require('./dbconnect');
+const mongoose = require('mongoose');
+
 // database setup
-const MongoClient = mongodb.MongoClient;
 const url = process.env.MONGOLAB_URI;
-//dbconnect(MongoClient, url);
+mongoose.connect(url);
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log('connected to db');
+});
 
 const app = express();
 
@@ -13,3 +17,4 @@ app.get('/', function(req, res) {
 });
 
 app.listen(4000);
+console.log("listening on 4000");
