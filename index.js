@@ -33,12 +33,19 @@ app.use(router);
 router.get('/new/:url*', function(req, res, next) {
   let passed_url = req.params.url + req.params[0];
   if (validUrl.isUri(passed_url)){
-    console.log("valid url");
+    database(passed_url);
   } else {
     console.log("Invalid url");
   }
   res.end("hello");
 });
+
+function database(url) {
+  UrlModel.findOne({ original_url: url }, "original_url short_url", function(err, data) {
+    if (err) throw err;
+    console.log(data);
+  });
+}
 
 app.listen(4000);
 console.log("listening on 4000");
