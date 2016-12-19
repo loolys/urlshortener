@@ -87,6 +87,6 @@ function createDbItem(url, res) {
     });
   });
 }
-
-app.listen(4000);
+let port = process.env.PORT || 4000;
+app.listen(port);
 console.log("listening on 4000");
