@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const validUrl = require('valid-url');
+const path = require('path');
 
 // database setup
 const url = process.env.MONGOLAB_URI;
@@ -18,26 +19,23 @@ const urlSchema = new mongoose.Schema({
 });
 
 const UrlModel = mongoose.model('Url', urlSchema);
-// let itemOne = UrlModel({
-//   original_url: "http://www.google.com",
-//   short_url: "http://bitsi.ze/2",
-// }).save(function(err) {
-//   if (err) throw err;
-//   console.log("saved");
-// });
 
 const app = express();
 const router = express.Router();
 app.use(router);
+
+app.get('/', function(req, res) {
+  // homepage
+  res.sendFile(path.join(__dirname+'/index.html'));
+});
 
 router.get('/new/:url*', function(req, res, next) {
   let passed_url = req.params.url + req.params[0];
   if (validUrl.isUri(passed_url)){
     let data = dataB(passed_url, res);
   } else {
-    console.log("Invalid url");
+    // if not valid url, check if short_url in db and redirect, else error
     UrlModel.findOne( {short_url: passed_url }, function(err, data) {
-      console.log(data);
       if(data === null){
         jason = { invalid_url: "Not a valid url" }
         res.json(jason);
@@ -53,10 +51,7 @@ let dataB = function database(url, res, callback) {
   UrlModel.findOne({$or: [{original_url: url }, { short_url: url }]}, function(err, data) {
     if (err) throw err;
     if (!data){
-      console.log("No item found ");
-      console.log(url);
       createDbItem(url, res);
-      // database(url, res, callback);
     } else {
       if (url == data.short_url) {
         res.redirect(data.original_url);
@@ -76,18 +71,14 @@ function createDbItem(url, res) {
   this.res = res;
   let item = UrlModel({
     original_url: url,
-    short_url: "test url",
+    short_url: "test url", // placeholder value
   }).save(function(err, data) {
     if (err) throw err;
-    console.log("saved");
-    console.log(data.id);
     let id = data.id;
-    let short_id = JSON.stringify(data.id).slice(21,25);
-    console.log(short_id);
+    let short_id = JSON.stringify(data.id).slice(21,25); // generate unique id with mongoId
     UrlModel.findByIdAndUpdate(id, { $set: { short_url: short_id }},
     { new: true }, function(err, data) {
       if (err) throw err;
-      console.log("updated short_url");
       let jason = {
         original_url: data.original_url,
         short_url: "http://127.0.0.1:4000/new/" + data.short_url,
