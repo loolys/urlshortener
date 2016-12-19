@@ -38,7 +38,12 @@ router.get('/new/:url*', function(req, res, next) {
     console.log("Invalid url");
     UrlModel.findOne( {short_url: passed_url }, function(err, data) {
       console.log(data);
-      res.redirect(data.original_url);
+      if(data === null){
+        jason = { invalid_url: "Not a valid url" }
+        res.json(jason);
+      } else {
+        res.redirect(data.original_url);
+      }
     });
   }
 });
@@ -58,7 +63,7 @@ let dataB = function database(url, res, callback) {
       } else {
         let jason = {
           original_url: data.original_url,
-          short_url: data.short_url,
+          short_url: "http://127.0.0.1:4000/new/" + data.short_url,
         };
         res.json(jason);
       }
@@ -85,7 +90,7 @@ function createDbItem(url, res) {
       console.log("updated short_url");
       let jason = {
         original_url: data.original_url,
-        short_url: data.short_url,
+        short_url: "http://127.0.0.1:4000/new/" + data.short_url,
       };
       res.json(jason);
     });
