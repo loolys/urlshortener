@@ -33,27 +33,62 @@ app.use(router);
 router.get('/new/:url*', function(req, res, next) {
   let passed_url = req.params.url + req.params[0];
   if (validUrl.isUri(passed_url)){
-    //res.writeHead(200, { 'Content-Type': 'application/json' });
     let data = dataB(passed_url, res);
-    console.log(data);
   } else {
     console.log("Invalid url");
+    UrlModel.findOne( {short_url: passed_url }, function(err, data) {
+      console.log(data);
+      res.redirect(data.original_url);
+    });
   }
 });
 
 let dataB = function database(url, res, callback) {
-  UrlModel.findOne({ original_url: url }, function(err, data) {
+  this.url = url;
+  UrlModel.findOne({$or: [{original_url: url }, { short_url: url }]}, function(err, data) {
     if (err) throw err;
     if (!data){
-      console.log("No item found");
-      // let newId = JSON.stringify(data["_id"]).slice(21,25)
+      console.log("No item found ");
+      console.log(url);
+      createDbItem(url, res);
+      // database(url, res, callback);
     } else {
+      if (url == data.short_url) {
+        res.redirect(data.original_url);
+      } else {
+        let jason = {
+          original_url: data.original_url,
+          short_url: data.short_url,
+        };
+        res.json(jason);
+      }
+    }
+  });
+}
+
+function createDbItem(url, res) {
+  this.url = url;
+  this.res = res;
+  let item = UrlModel({
+    original_url: url,
+    short_url: "test url",
+  }).save(function(err, data) {
+    if (err) throw err;
+    console.log("saved");
+    console.log(data.id);
+    let id = data.id;
+    let short_id = JSON.stringify(data.id).slice(21,25);
+    console.log(short_id);
+    UrlModel.findByIdAndUpdate(id, { $set: { short_url: short_id }},
+    { new: true }, function(err, data) {
+      if (err) throw err;
+      console.log("updated short_url");
       let jason = {
         original_url: data.original_url,
         short_url: data.short_url,
       };
       res.json(jason);
-    }
+    });
   });
 }
 
